@@ -1,0 +1,89 @@
+{
+ "meta": {
+  "strategy_version": "ROTATION-v1.0",
+  "as_of": "2026-09-26 (SAMPLE)",
+  "starting_capital": 100000
+ },
+ "open_positions": [
+  {
+   "ticker": "XLK",
+   "direction": "LONG",
+   "shares": 40,
+   "cost_basis": 230.0,
+   "opened_date": "2026-09-01",
+   "rank": 1,
+   "target_weight": 0.34,
+   "actual_weight": 0.33,
+   "composite": 1.8,
+   "days_held": 25,
+   "status": "open",
+   "strategy_version": "ROTATION-v1.0"
+  },
+  {
+   "ticker": "XLI",
+   "direction": "LONG",
+   "shares": 60,
+   "cost_basis": 130.0,
+   "opened_date": "2026-09-01",
+   "rank": 2,
+   "target_weight": 0.33,
+   "actual_weight": 0.34,
+   "composite": 1.4,
+   "days_held": 25,
+   "status": "open",
+   "strategy_version": "ROTATION-v1.0"
+  },
+  {
+   "ticker": "XLV",
+   "direction": "LONG",
+   "shares": 50,
+   "cost_basis": 145.0,
+   "opened_date": "2026-09-01",
+   "rank": 3,
+   "target_weight": 0.33,
+   "actual_weight": 0.33,
+   "composite": 1.1,
+   "days_held": 25,
+   "status": "open",
+   "strategy_version": "ROTATION-v1.0"
+  }
+ ],
+ "closed_positions": [
+  {
+   "ticker": "XLE",
+   "direction": "LONG",
+   "opened_date": "2026-08-04",
+   "closed_date": "2026-09-01",
+   "shares": 70,
+   "cost_basis": 100.0,
+   "exit_price": 104.2,
+   "realized_pnl": 294.0,
+   "rotation_pnl_pct": 4.2,
+   "days_held": 28,
+   "close_reason": "rotated out (rank fell below cut-off)"
+  },
+  {
+   "ticker": "XLB",
+   "direction": "LONG",
+   "opened_date": "2026-08-04",
+   "closed_date": "2026-09-01",
+   "shares": 40,
+   "cost_basis": 90.0,
+   "exit_price": 88.2,
+   "realized_pnl": -72.0,
+   "rotation_pnl_pct": -2.0,
+   "days_held": 28,
+   "close_reason": "rotated out (rank fell below cut-off)"
+  }
+ ],
+ "cash": 58000.0,
+ "equity_asof": 103210.0,
+ "equity_history": [
+  {
+   "date": "2026-09-26",
+   "equity": 103210.0,
+   "note": "sample"
+  }
+ ],
+ "flags": []
+}

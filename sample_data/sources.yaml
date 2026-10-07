@@ -1,0 +1,20 @@
+# SAMPLE source registry. All sources are fictional.
+sources:
+  - slug: example-analyst
+    display: Example Analyst
+    aliases: ["@ExampleAnalyst", "ExampleAnalyst", "Example Analyst"]
+    platform: x
+    type: independent
+    status: active
+  - slug: sample-bank-desk
+    display: Sample Bank Macro Desk
+    aliases: ["Sample Bank", "Sample Bank Desk"]
+    platform: sellside
+    type: sellside
+    status: active
+  - slug: demo-newsletter
+    display: Demo Newsletter
+    aliases: ["Demo Letter"]
+    platform: substack
+    type: independent
+    status: active

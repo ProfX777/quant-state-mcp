@@ -1,0 +1,6 @@
+book,analyst,date,ticker,heat,direction,version,file,fwd_ret,adj_ret,authors,author_n,narrative_stage,stage_transition,market_cap,cap_bucket
+LONG,tech,2026-08-01,MU,8.0,LONG,LONG-v1.0,sample,0.111,0.085,example-analyst;demo-newsletter,2,diffusing,emerging->diffusing,1000000000000.0,mega
+LONG,tech,2026-08-08,MU,7.0,LONG,LONG-v1.0,sample,-0.02,-0.031,example-analyst,1,diffusing,diffusing->diffusing,1000000000000.0,mega
+LONG,macro,2026-08-01,GLD,7.0,LONG,LONG-v1.0,sample,0.039,0.012,sample-bank-desk,1,crowded,diffusing->crowded,,etf
+LONG,tech,2026-08-01,KLAC,6.0,LONG,LONG-v1.0,sample,-0.06,-0.072,demo-newsletter,1,emerging,emerging->emerging,90000000000.0,large
+ST,macro,2026-09-30,SPY,6.0,LONG,ST-v1.1,sample,0.011,0.004,sample-bank-desk,1,crowded,crowded->crowded,,etf

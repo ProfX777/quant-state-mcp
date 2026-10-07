@@ -1,0 +1,39 @@
+{
+ "label": "SAMPLE",
+ "description": "Bundled demonstration data. Every number, name, quote and source is invented. Copy this file as a template to point the server at real data, then set QUANT_STATE_CONFIG to its path.",
+ "books": {
+  "LONG": {
+   "horizon": "weekly, 2-8 week theses (simulated ledger)",
+   "ledger": "long/ledger.json",
+   "runs": "long/runs",
+   "domains": [
+    {"name": "tech", "graph": "long/tech/graph.json", "hubs": {"trend": "long/tech/trends", "ticker": "long/tech/tickers"}},
+    {"name": "macro", "graph": "long/macro/graph.json", "hubs": {"trend": "long/macro/trends", "ticker": "long/macro/tickers"}}
+   ],
+   "broker": {"cmd": ["{python}", "fake_broker.py", "--book", "LONG"], "json": false}
+  },
+  "ST": {
+   "horizon": "daily, 2 days to 2 weeks (paper brokerage account)",
+   "ledger": "st/ledger.json",
+   "runs": "st/runs",
+   "domains": [
+    {"name": "tech", "graph": "st/tech/graph.json", "hubs": {"trend": "st/tech/trends", "ticker": "st/tech/tickers"}},
+    {"name": "macro", "graph": "st/macro/graph.json", "hubs": {"trend": "st/macro/trends", "ticker": "st/macro/tickers"}}
+   ],
+   "broker": {"cmd": ["{python}", "fake_broker.py", "--book", "ST"], "json": true}
+  },
+  "ROTATION": {
+   "horizon": "weekly systematic theme rotation (paper brokerage account)",
+   "ledger": "rotation/ledger.json",
+   "runs": "long/runs",
+   "domains": [
+    {"name": "tech", "graph": "long/tech/graph.json", "hubs": {"trend": "long/tech/trends", "ticker": "long/tech/tickers"}},
+    {"name": "macro", "graph": "long/macro/graph.json", "hubs": {"trend": "long/macro/trends", "ticker": "long/macro/tickers"}}
+   ],
+   "broker": {"cmd": ["{python}", "fake_broker.py", "--book", "ROTATION"], "json": false}
+  }
+ },
+ "sources_yaml": "sources.yaml",
+ "forecast_csv": "forecast_ledger.csv",
+ "ingest_status": "ingest_status.json"
+}

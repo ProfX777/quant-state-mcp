@@ -1,0 +1,109 @@
+{
+ "meta": {
+  "strategy_version": "ST-v1.1",
+  "as_of": "2026-10-01 (SAMPLE)",
+  "starting_capital": 100000
+ },
+ "open_positions": [
+  {
+   "ticker": "SPY",
+   "direction": "LONG",
+   "shares": 20,
+   "cost_basis": 560.0,
+   "opened_date": "2026-09-30",
+   "stop": 550.0,
+   "target": 580.0,
+   "review_date": "2026-10-10",
+   "horizon": "Swing",
+   "current_price_asof": 566.0,
+   "unrealized_pnl": 120.0,
+   "unrealized_pct": 1.07,
+   "strategy_version": "ST-v1.1",
+   "originating_synthesis": "run 2026-09-30"
+  },
+  {
+   "ticker": "USO",
+   "direction": "SHORT",
+   "shares": 40,
+   "cost_basis": 75.0,
+   "opened_date": "2026-09-30",
+   "stop": 78.0,
+   "target": 70.0,
+   "review_date": "2026-10-08",
+   "horizon": "Fast",
+   "current_price_asof": 74.0,
+   "unrealized_pnl": 40.0,
+   "unrealized_pct": 1.33,
+   "strategy_version": "ST-v1.1",
+   "originating_synthesis": "run 2026-09-30"
+  }
+ ],
+ "closed_positions": [
+  {
+   "ticker": "QQQ",
+   "direction": "LONG",
+   "opened_date": "2026-09-22",
+   "closed_date": "2026-09-26",
+   "cost_basis": 480.0,
+   "close_price": 492.0,
+   "shares": 10,
+   "realized_pnl": 120.0,
+   "realized_pct": 2.5,
+   "verdict": "closed-winner",
+   "outcome": "win",
+   "horizon": "Fast",
+   "strategy_version": "ST-v1.1",
+   "originating_synthesis": "run 2026-09-22",
+   "price_basis": "sample"
+  },
+  {
+   "ticker": "XLP",
+   "direction": "LONG",
+   "opened_date": "2026-09-22",
+   "closed_date": "2026-09-24",
+   "cost_basis": 84.0,
+   "close_price": 82.49,
+   "shares": 50,
+   "realized_pnl": -75.5,
+   "realized_pct": -1.8,
+   "verdict": "closed-stopped",
+   "outcome": "loss",
+   "horizon": "Fast",
+   "strategy_version": "ST-v1.1",
+   "originating_synthesis": "run 2026-09-22",
+   "price_basis": "sample"
+  },
+  {
+   "ticker": "IWM",
+   "direction": "LONG",
+   "opened_date": "2026-09-23",
+   "closed_date": "2026-10-01",
+   "cost_basis": 220.0,
+   "close_price": 220.66,
+   "shares": 20,
+   "realized_pnl": 13.2,
+   "realized_pct": 0.3,
+   "verdict": "closed-mixed",
+   "outcome": "flat",
+   "horizon": "Swing",
+   "strategy_version": "ST-v1.1",
+   "originating_synthesis": "run 2026-09-23",
+   "price_basis": "sample"
+  }
+ ],
+ "working_orders": [],
+ "cash": 72000.0,
+ "equity_asof": 98500.0,
+ "gross_exposure_pct": 26.4,
+ "realized_pnl_total": 57.7,
+ "unrealized_pnl_total": 160.0,
+ "total_return_pct": -1.5,
+ "equity_history": [
+  {
+   "date": "2026-10-01",
+   "equity": 98500.0,
+   "note": "sample"
+  }
+ ],
+ "flags": []
+}

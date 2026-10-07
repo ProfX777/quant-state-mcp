@@ -1,135 +1,101 @@
-# quant-state — a read-only MCP server over a three-book quant research system
+# quant-state
 
-`quant-state` exposes the *state* of an agent-driven investment-research pipeline — its knowledge
-graph, three paper ledgers, forecast ledger, source registry, ingestion marker, and a read-only
-broker snapshot — as typed [MCP](https://modelcontextprotocol.io) tools and resources. Any Claude
-surface (Claude Code sub-agents, Claude Desktop, a future hosted deployment) can then ask compact,
-structured questions instead of reading whole files.
+A read-only [MCP](https://modelcontextprotocol.io) server that lets an AI assistant ask structured questions about a personal AI research and paper-trading system: its knowledge graph, three simulated portfolios, a forecast ledger, a source registry and paper-broker positions. **17 typed tools, 4 resources, no writes, no orders.**
 
-It is deliberately **read-only**. It never writes a vault or ledger, never places or cancels an
-order, never runs a pipeline stage. The orchestrator keeps every write and every order behind its
-existing marker-file and reconcile-first contracts; this server returns *diffs and facts* for it
-to act on.
+Built with Claude Code. This repository is the public, read-only interface to a larger private system that runs daily: AI agents read a curated set of market research, maintain an evidence graph of investment themes, turn it into trade ideas, track them in paper portfolios, and grade every outcome against the sources behind it. **Plain-English overview of the full system: [AI-Assisted Research Desk](https://claude.ai/artifact/PFXkK5nqYGNHHPKkhNyar1).**
 
-## The system it sits on
+## Try it in a minute
 
-Three books, each with its own Obsidian vault(s), ledger, and graph snapshot:
+The repo ships with an invented sample dataset, so everything runs without access to the private system.
 
-| Book | Horizon | Ledger | Graph |
-|---|---|---|---|
-| `LONG` | weekly, 2–8-week theses | `Main Mind/Synthesis/Portfolio_Ledger.json` (sim) | `pipeline-tooling/graph/{Research,Macro} Mind.json` |
-| `ST` | daily, 48 h–2 wk trades (live paper on Alpaca) | `…ST/Main Mind/Synthesis/Portfolio_Ledger.json` | `pipeline-tooling-st/graph/…` |
-| `ROTATION` | weekly systematic trend-rotation sleeve (paper) | `Main Mind/Rotation/Portfolio_Ledger.json` | shares LONG's graph |
-
+```bash
+git clone https://github.com/ProfX777/quant-state-mcp.git && cd quant-state-mcp
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/python test_state.py      # 48 checks on the sample data, no network
+.venv/bin/python smoke_client.py    # starts the server over MCP and calls every tool
 ```
-                 ┌──────────────── research ingestion (X bookmarks + Grok, YouTube, Substack, Dropbox) ────────────────┐
-                 │   NotebookLM notebooks  ──►  daily/weekly query anchors  ──►  triage wires evidence into hubs   │
-                 └────────────────────────────────────────────┬───────────────────────────────────────────────────┘
-                                                              ▼
-        Obsidian vaults (hub .md frontmatter: aliases, direction, strength, realized_outcomes)
-        build_graph.py ──► graph/<Vault>.json (pagerank, velocity, staleness, evidence edges, narrative stages)
-        Portfolio_Ledger.json × 3 · forecast_ledger.csv · sources.yaml · ingest_status.json · Pipeline Runs/*.md
-                                                              │
-                                              ┌───────────────┴───────────────┐
-                                              │   quant-state (this server)   │  read side ONLY
-                                              │  state.py  ←  server.py/stdio │
-                                              └───────────────┬───────────────┘
-                                                              ▼
-              Claude Code stage agents · Claude Desktop · any MCP client       (writes + orders stay in the
-                                                                                orchestrator's own Python)
+
+Add it to Claude Code and ask questions in plain English ("which themes are losing support?", "is the rotation book in sync with the broker?"):
+
+```bash
+claude mcp add quant-state -- "$PWD/.venv/bin/python" "$PWD/server.py"
 ```
+
+## Pointing it at real data
+
+Where the data lives is a config file, not code. With no setting the server uses `sample_data/config.json`. To use your own data, copy that file, edit the paths, and set one environment variable:
+
+```bash
+claude mcp add quant-state -e QUANT_STATE_CONFIG=/path/to/my-config.json -- "$PWD/.venv/bin/python" "$PWD/server.py"
+```
+
+Every response that describes the system carries a `data_source` label (`SAMPLE` or whatever your config calls itself), and the server states it at startup, so sample numbers can't be mistaken for live ones. `*.local.json` is git-ignored for configs kept inside the folder.
 
 ## Tools
 
-All tools take `book` ∈ `LONG | ST | ROTATION` unless noted, and all carry `readOnlyHint=true`.
+All tools take `book` = `LONG` (weekly, 2-8 week theses), `ST` (daily, 2 days to 2 weeks) or `ROTATION` (weekly systematic theme rotation), unless noted. Every tool is marked read-only.
 
 | Tool | Answers |
 |---|---|
-| `list_books()` | the three books, where their state lives, which graph snapshots exist |
-| `graph_meta(book)` | per-vault snapshot as-of, node/edge/hub counts, stale hubs, components, contradiction flags |
-| `resolve_entity(book, mention)` | `"Micron"` / `"$MU"` / `"AI infra"` → the **canonical hub filename** via each hub's `aliases:` (a non-canonical wikilink silently drops its edge; triage does this by hand today) |
-| `get_theme(book, name)` | one hub: direction/strength/last_assessed, staleness, pagerank, velocity, narrative stage, realized track record, top evidence edges (source, weight, age, stance, short quote) |
-| `get_ticker_context(book, ticker)` | `get_theme` + the book's ledger exposure to that ticker |
-| `fading_theses(book)` | hubs whose support is decaying (stale, decelerating, negative velocity, weak strength), worst-first |
-| `ledger_summary(book)` | cash, equity, gross, realized/unrealized, return, counts, last equity mark |
-| `get_positions(book)` | compact open positions (rotation adds rank / weights) |
-| `get_pick_outcomes(book, ticker?, since?)` | realized closes with verdicts |
-| `hit_rate(book, strategy_version?, since?)` | wins / graded closes, respecting the version-cohort rule |
-| `score_run(book, date)` | what one synthesis run closed, still holds, and realized |
-| `list_runs(book)` | recent run dates (eval notes readable as resources) |
-| `forecast_rows(book?, analyst?, ticker?, author?)` | candidate-level forward-return rows (directional instrumentation, never a signal) |
-| `resolve_source(handle)` | X handle / name → registry slug, or `unattributed` (never guessed) |
-| `ingest_status()` | the pre-dawn ingestion marker and notebook cap counts |
-| `broker_snapshot(book, subcommand=account)` | paper-broker positions/equity via the existing Alpaca adapter's **read** subcommands only |
-| `reconcile_diff(book)` | ledger vs broker — the diff only |
+| `list_books()` | Which data is loaded, and what each book has |
+| `graph_meta(book)` | Graph snapshot date, counts, stale hubs, contradiction flags per research domain |
+| `resolve_entity(book, mention)` | `"Micron"` / `"$MU"` / `"AI infra"` → the canonical theme or company page, via aliases |
+| `get_theme(book, name)` | Direction, strength, staleness, pagerank, velocity, narrative stage, track record, strongest evidence |
+| `get_ticker_context(book, ticker)` | `get_theme` plus the book's position in that ticker |
+| `fading_theses(book)` | Themes losing support (stale, decelerating, negative velocity), worst first |
+| `ledger_summary(book)` | Cash, equity, exposure, P&L, open/closed counts |
+| `get_positions(book)` | Open positions with stops and review dates |
+| `get_pick_outcomes(book, ticker?, since?)` | Closed positions and their verdicts |
+| `hit_rate(book, strategy_version?, since?)` | Win rate by rule-version cohort |
+| `score_run(book, date)` | What one run closed and still holds |
+| `list_runs(book)` | Recent run dates (notes readable as resources) |
+| `forecast_rows(...)` | Forward returns for every candidate idea, picked or not |
+| `resolve_source(handle)` | Handle → registered source, or `unattributed` (never guessed) |
+| `ingest_status()` | Last ingestion run and library sizes |
+| `broker_snapshot(book)` | Paper-broker positions, equity, cash |
+| `reconcile_diff(book)` | Ledger vs broker: what differs |
 
 Resources: `quant://books`, `quant://ledger/{book}`, `quant://run/{book}/{date}`, `quant://ingest`.
 
-### What is refused by construction
+## Safety by construction
 
-`broker_snapshot` runs the adapters' `account` / `reconcile` subcommands and nothing else;
-`submit`, `rebalance`, `--live`, `--auto`, `--allow-live` are rejected inside `state.py` before any
-process is spawned. Credentials are read by the adapters themselves, never by this server.
+- **Cannot trade.** `broker_snapshot` runs only an adapter's `account` or `reconcile` subcommand. `submit`, `rebalance` and any live flag are refused before a process starts, and the tests check it.
+- **Cannot write.** No tool modifies a ledger, note or file. `reconcile_diff` reports differences; acting on them is left to whatever owns the ledger.
+- **No credentials.** Broker adapters read their own credentials. The server never sees them.
+- **Labelled data.** Sample and live data can't be confused (see above).
 
-## Install / run
+## Measured context savings
 
-```bash
-cd quant-state-mcp
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # mcp>=2,<3
-.venv/bin/python test_state.py      # read-only tests against the live files (broker stubbed)
-.venv/bin/python smoke_client.py    # spawns server.py over stdio with the official client
-.venv/bin/python server.py          # stdio server
-```
+`measure_context.py` compares the bytes an agent reads to answer a structured question by opening the underlying files, versus calling the tool. On the live system (2026-10-07):
 
-Register for every Claude Code session (user scope):
-
-```bash
-claude mcp add -s user quant-state -- "$PWD/.venv/bin/python" "$PWD/server.py"
-```
-
-## Measured context (static proxy — read the caveat)
-
-`measure_context.py` compares the bytes an agent must ingest to answer a concrete stage question by
-reading the underlying file(s) versus calling the typed tool. Numbers from this system on
-2026-09-22:
-
-| Question a stage asks | File read | Tool | Ratio |
+| Question | Read the files | Call the tool | Ratio |
 |---|---|---|---|
-| Open exposure + headline (track-outcomes pre-read) | 162 KB | 4.1 KB | 40× |
-| Is hub X still supported; strongest evidence? | 1,602 KB | 2.3 KB | 698× |
-| What did run Y close; cohort hit rate? | 172 KB | 1.6 KB | 109× |
-| Which canonical hub does "Micron" map to? | 990 KB (alias scan of every hub) | 0.2 KB | 4,039× |
-| Is the ST ledger tied out to the broker? | 839 KB | 0.1 KB (diff) | 6,504× |
+| Open exposure and headline numbers | 162 KB | 4.2 KB | 39× |
+| Support and evidence for one theme | 1,561 KB | 2.4 KB | 660× |
+| What a run closed, and the cohort hit rate | 162 KB | 0.7 KB | 217× |
+| Canonical page for a mention | 990 KB | 0.25 KB | 4,006× |
+| Ledger vs broker tie-out | 808 KB | 0.13 KB | 6,264× |
 
-**Caveat, stated plainly:** this is a byte proxy for a *naïve full-file read*, not a live per-run
-token measurement. Real stages partially read files, and the stages that dominate this pipeline's
-cost — triage and the analysts — must read hub *prose* to lift verbatim evidence quotes, and gain
-nothing from typed reads. The wins are confined to structured-state questions like the five above.
-The honest line is therefore:
+This is a byte proxy for a naive full-file read, not a per-run token measurement. Stages that must read note prose (for example, to quote evidence word for word) gain nothing from typed reads; the gain is confined to structured questions like these. On the small sample dataset the same script shows smaller ratios.
 
-> Built a read-only MCP server exposing a three-book research system's knowledge graph, paper
-> ledgers, forecast ledger, and broker state as 17 typed tools; the structured-state reads a
-> stage makes (exposure, hub support, run scoring, entity resolution, broker tie-out) shrink from
-> 160 KB–1.6 MB of file reads to 0.1–4 KB of tool responses.
+## Tests
 
-To turn that into a per-run number, instrument one stage (track-outcomes is the natural first) and
-record its input tokens with and without the server.
-
-## Non-goals
-
-- Orchestration. MCP is a tool interface; the pipeline's stage sequencing, marker contracts, and
-  Workflow dispatch stay where they are.
-- Ingestion. The Selenium/cookie/Dropbox paths are long-running and brittle; only `ingest_status`
-  is exposed.
-- NotebookLM. Two NotebookLM MCP servers already exist in this environment; nothing is duplicated.
-- Any write, any order.
+- `test_state.py`: 48 checks on the sample data, including the config switch, alias resolution, cohort hit rates, and the broker path end to end through `sample_data/fake_broker.py`.
+- `smoke_client.py`: starts the server with the official MCP client and calls all 17 tools and two resources.
+- Both take under a minute and need no network or credentials.
 
 ## Layout
 
 ```
-state.py            pure read functions (no MCP import) — the thing to test
-server.py           MCPServer wrapper, stdio transport
-test_state.py       36 read-only checks against the live files
-smoke_client.py     end-to-end stdio smoke test through mcp.client
-measure_context.py  the static byte comparison above
+state.py            read-only functions over the data (no MCP dependency; what the tests exercise)
+server.py           MCP server wrapper, stdio transport
+sample_data/        invented dataset, config template, fake broker adapter, generator script
+test_state.py       unit-level checks
+smoke_client.py     end-to-end MCP protocol test
+measure_context.py  the byte comparison above
 ```
+
+## Versions
+
+- **0.2.0**: data location moved to a config file; bundled sample dataset; SAMPLE/LIVE labelling; tests run anywhere; fixed broker text-table parsing when prices are padded.
+- **0.1.0**: first release; ran only against the author's machine.

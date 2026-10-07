@@ -1,0 +1,24 @@
+{
+ "label": "SAMPLE",
+ "date": "2026-10-01",
+ "started": "2026-10-01T12:15:00Z",
+ "finished": "2026-10-01T12:31:00Z",
+ "routines": {
+  "tech-video": {
+   "status": "ok",
+   "added": 3
+  },
+  "macro-video": {
+   "status": "ok",
+   "added": 5
+  },
+  "free-newsletters": {
+   "status": "ok",
+   "added": 1
+  }
+ },
+ "cap_status": {
+  "Tech library": 212,
+  "Macro library": 240
+ }
+}

@@ -1,0 +1,228 @@
+{
+ "vault": "sample",
+ "generated": "2026-09-20T07:30:00",
+ "today": "2026-09-20",
+ "recent_window_days": 14,
+ "edge_half_life_days": 45,
+ "edge_weight_floor": 0.05,
+ "stale_assessment_days": 30,
+ "counts": {
+  "nodes": 9,
+  "edges": 24,
+  "trends": 2,
+  "tickers": 2,
+  "sources": 5,
+  "stale_hubs": 0
+ },
+ "connectivity": {
+  "post": {
+   "n_components": 2,
+   "largest": 8
+  }
+ },
+ "rows": [
+  {
+   "name": "Global Liquidity",
+   "type": "trend",
+   "direction": "decelerating",
+   "strength": "med",
+   "age_days": 12,
+   "stale": false,
+   "pagerank": 0.061,
+   "betweenness": 0.0305,
+   "community": 1,
+   "velocity": -2,
+   "momentum": 1.5,
+   "deep_read_score": 0.0915,
+   "egonet_density": 0.3,
+   "in_degree": 9,
+   "out_degree": 2
+  },
+  {
+   "name": "Sticky Inflation",
+   "type": "trend",
+   "direction": "stable",
+   "strength": "low",
+   "age_days": 8,
+   "stale": false,
+   "pagerank": 0.035,
+   "betweenness": 0.0175,
+   "community": 1,
+   "velocity": 1,
+   "momentum": 1.0,
+   "deep_read_score": 0.07,
+   "egonet_density": 0.3,
+   "in_degree": 5,
+   "out_degree": 2
+  },
+  {
+   "name": "GLD \u2014 Gold",
+   "type": "ticker",
+   "direction": "accelerating",
+   "strength": "high",
+   "age_days": 2,
+   "stale": false,
+   "pagerank": 0.048,
+   "betweenness": 0.024,
+   "community": 1,
+   "velocity": 3,
+   "momentum": 1.5,
+   "deep_read_score": 0.288,
+   "egonet_density": 0.3,
+   "in_degree": 7,
+   "out_degree": 2
+  },
+  {
+   "name": "DXY \u2014 US Dollar Index",
+   "type": "ticker",
+   "direction": "stable",
+   "strength": "med",
+   "age_days": 20,
+   "stale": false,
+   "pagerank": 0.03,
+   "betweenness": 0.015,
+   "community": 1,
+   "velocity": 0,
+   "momentum": 1.0,
+   "deep_read_score": 0.03,
+   "egonet_density": 0.3,
+   "in_degree": 4,
+   "out_degree": 2
+  },
+  {
+   "name": "Sample note 1",
+   "type": "source",
+   "direction": null,
+   "strength": null,
+   "age_days": 1,
+   "stale": false,
+   "pagerank": 0.003,
+   "betweenness": 0.0,
+   "community": 1,
+   "velocity": 0,
+   "momentum": 1.0,
+   "deep_read_score": 0.003,
+   "egonet_density": 0.0,
+   "in_degree": 0,
+   "out_degree": 2
+  },
+  {
+   "name": "Sample note 2",
+   "type": "source",
+   "direction": null,
+   "strength": null,
+   "age_days": 2,
+   "stale": false,
+   "pagerank": 0.003,
+   "betweenness": 0.0,
+   "community": 1,
+   "velocity": 0,
+   "momentum": 1.0,
+   "deep_read_score": 0.003,
+   "egonet_density": 0.0,
+   "in_degree": 0,
+   "out_degree": 2
+  },
+  {
+   "name": "Sample note 3",
+   "type": "source",
+   "direction": null,
+   "strength": null,
+   "age_days": 3,
+   "stale": false,
+   "pagerank": 0.003,
+   "betweenness": 0.0,
+   "community": 1,
+   "velocity": 0,
+   "momentum": 1.0,
+   "deep_read_score": 0.003,
+   "egonet_density": 0.0,
+   "in_degree": 0,
+   "out_degree": 2
+  },
+  {
+   "name": "Sample note 4",
+   "type": "source",
+   "direction": null,
+   "strength": null,
+   "age_days": 4,
+   "stale": false,
+   "pagerank": 0.003,
+   "betweenness": 0.0,
+   "community": 1,
+   "velocity": 0,
+   "momentum": 1.0,
+   "deep_read_score": 0.003,
+   "egonet_density": 0.0,
+   "in_degree": 0,
+   "out_degree": 2
+  },
+  {
+   "name": "Sample note 5",
+   "type": "source",
+   "direction": null,
+   "strength": null,
+   "age_days": 5,
+   "stale": false,
+   "pagerank": 0.003,
+   "betweenness": 0.0,
+   "community": 1,
+   "velocity": 0,
+   "momentum": 1.0,
+   "deep_read_score": 0.003,
+   "egonet_density": 0.0,
+   "in_degree": 0,
+   "out_degree": 2
+  }
+ ],
+ "edges": [],
+ "hub_evidence": {
+  "Global Liquidity": [
+   {
+    "source_note": "Sample note 2",
+    "etype": "trend_fit",
+    "conf": 0.8,
+    "weight": 0.58,
+    "age_days": 3,
+    "source_type": "x-bookmark",
+    "quote": "balance-sheet runoff is draining reserves faster than expected",
+    "stance": "bearish"
+   }
+  ],
+  "GLD \u2014 Gold": [
+   {
+    "source_note": "Sample note 4",
+    "etype": "trend_fit",
+    "conf": 0.9,
+    "weight": 0.63,
+    "age_days": 1,
+    "source_type": "x-bookmark",
+    "quote": "official-sector buying set another record",
+    "stance": "bullish"
+   }
+  ]
+ },
+ "narrative_stages": {
+  "Global Liquidity": {
+   "narrative_stage": "crowded",
+   "source_diversity_count": 4,
+   "sell_side_tag": "none",
+   "prior_stage": "diffusing",
+   "stage_transition": "diffusing->crowded"
+  },
+  "GLD \u2014 Gold": {
+   "narrative_stage": "diffusing",
+   "source_diversity_count": 4,
+   "sell_side_tag": "none",
+   "prior_stage": "emerging",
+   "stage_transition": "emerging->diffusing"
+  }
+ },
+ "contradictions": [
+  {
+   "rule": "R2",
+   "hub": "DXY \u2014 US Dollar Index",
+   "detail": "sample contradiction flag"
+  }
+ ]
+}
