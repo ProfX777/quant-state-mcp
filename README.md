@@ -2,7 +2,7 @@
 
 A read-only [MCP](https://modelcontextprotocol.io) server that lets an AI assistant ask structured questions about a personal AI research and paper-trading system: its knowledge graph, three simulated portfolios, a forecast ledger, a source registry and paper-broker positions. **17 typed tools, 4 resources, no writes, no orders.**
 
-Built with Claude Code. This repository is the public, read-only interface to a larger private system that runs daily: AI agents read a curated set of market research, maintain an evidence graph of investment themes, turn it into trade ideas, track them in paper portfolios, and grade every outcome against the sources behind it. **Plain-English overview of the full system: [AI-Assisted Research Desk](https://claude.ai/artifact/PFXkK5nqYGNHHPKkhNyar1).**
+This repository is the public, read-only interface to a larger private system that runs daily: AI agents read a curated set of market research, maintain an evidence graph of investment themes, turn it into trade ideas, track them in paper portfolios, and grade every outcome against the sources behind it. **Plain-English overview of the full system: [AI-Assisted Research Desk](https://claude.ai/artifact/PFXkK5nqYGNHHPKkhNyar1).**
 
 ## Try it in a minute
 
