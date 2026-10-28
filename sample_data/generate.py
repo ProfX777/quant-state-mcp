@@ -10,6 +10,7 @@ marker) so the server, the tests and CI run on any machine without access to rea
 """
 import csv
 import json
+from datetime import date, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -55,21 +56,64 @@ def evidence(source, weight, age, stance, conf, quote):
             "source_type": "x-bookmark", "quote": quote, "stance": stance}
 
 
+def days_before(today, n):
+    return (date.fromisoformat(today) - timedelta(days=n)).isoformat()
+
+
 def graph(today, rows, hub_evidence, stages, contradictions=()):
     sources = [{"name": f"Sample note {i}", "type": "source", "direction": None, "strength": None,
-                "age_days": i, "stale": False, "pagerank": 0.003, "betweenness": 0.0, "community": 1,
-                "velocity": 0, "momentum": 1.0, "deep_read_score": 0.003, "egonet_density": 0.0,
-                "in_degree": 0, "out_degree": 2} for i in range(1, 6)]
+                "date": days_before(today, i), "age_days": i, "stale": False, "pagerank": 0.003,
+                "betweenness": 0.0, "community": 1, "velocity": 0, "momentum": 1.0, "deep_read_score": 0.003,
+                "egonet_density": 0.0, "in_degree": 0, "out_degree": 2} for i in range(1, 6)]
     hubs = [r for r in rows if r["type"] in ("trend", "ticker")]
+    edges = [{"src": e["source_note"], "dst": h, "weight": e["weight"], "kinds": ["pertains_to", "trend_fit"],
+              "sections": [], "etype": e["etype"], "conf": e["conf"], "quote": e["quote"],
+              "source_type": e["source_type"], "asserted_date": days_before(today, e["age_days"]), "stance": e["stance"]}
+             for h, evs in hub_evidence.items() for e in evs]
     return {"vault": "sample", "generated": f"{today}T07:30:00", "today": today, "recent_window_days": 14,
             "edge_half_life_days": 45, "edge_weight_floor": 0.05, "stale_assessment_days": 30,
-            "counts": {"nodes": len(rows) + len(sources), "edges": 6 * len(hubs),
+            "counts": {"nodes": len(rows) + len(sources), "edges": len(edges),
                        "trends": sum(r["type"] == "trend" for r in hubs),
                        "tickers": sum(r["type"] == "ticker" for r in hubs),
                        "sources": len(sources), "stale_hubs": sum(bool(r["stale"]) for r in hubs)},
             "connectivity": {"post": {"n_components": 2, "largest": len(rows) + len(sources) - 1}},
-            "rows": rows + sources, "edges": [], "hub_evidence": hub_evidence,
+            "rows": rows + sources, "edges": edges, "hub_evidence": hub_evidence,
             "narrative_stages": stages, "contradictions": list(contradictions)}
+
+
+def notes(domain_rel, today, hub_evidence):
+    """The five evidence notes every sample graph lists as 'Sample note 1..5', so recent_notes has files
+    to open. Notes 2 and 3 have no description, so their excerpts come from the body; note 2 is laid out
+    like a NotebookLM weekly-query note; note 5 was published long before it was imported."""
+    for i in range(1, 6):
+        name = f"Sample note {i}"
+        imported = days_before(today, i)
+        published = days_before(today, 40) if i == 5 else imported
+        linked = [(h, e) for h, evs in hub_evidence.items() for e in evs if e["source_note"] == name]
+        fm = [f'title: "{name}: invented evidence"']
+        if i == 2:
+            fm += ["source: NotebookLM", 'author:', '  - "Sample Bank Macro Desk"', "notebook: Macro library",
+                   "source_type: nlm-weekly"]
+        else:
+            fm += ["source: X", f'url: "https://example.invalid/post/{i}"', "author:", '  - "[[@ExampleAnalyst]]"',
+                   "source_type: x-bookmark"]
+        fm += [f"published: {published}", f"date_published: {published}", f"date_imported: {imported}"]
+        if i not in (2, 3):
+            fm.append(f'description: "Sample note {i} description: invented one-line summary of the evidence."')
+        fm.append("pertains_to:" + ("" if linked else " []"))
+        fm += [f'  - "[[{h}]]"' for h, _ in linked]
+        fm.append("trend_fit:" + ("" if linked else " []"))
+        for h, e in linked:
+            fm += [f'  - trend: "[[{h}]]"', f"    confidence: {e['conf']}", f"    asserted_date: {published}",
+                   f'    evidence_quote: "{e["quote"]}"', f"    stance: {e['stance']}", "    attributed_to: example-analyst"]
+        if i == 2:
+            body = (f"# Weekly query {imported}\n\n> Source-scoped: only invented sources were visible.\n\n"
+                    "## Query\n\nWhat changed this week?\n\n## Response\n\n### **1. Invented theme**\n\n"
+                    f"Sample note {i} body: the notebook's sources agree that the invented indicator turned.\n")
+        else:
+            body = (f"Sample note {i} body: order books look full and the invented post says so in its own words.\n\n"
+                    "## AI explanation (Grok)\n\nAn invented explanation that must not be the excerpt.\n")
+        write(f"{domain_rel}/notes/{name}.md", "---\n" + "\n".join(fm) + "\n---\n\n" + body)
 
 
 def stage(now, prior, diversity):
@@ -114,6 +158,7 @@ def main():
             evidence("Sample note 3", 0.40, 6, "neutral", 0.6, "inventory at module makers is back to normal"),
         ],
     }, {"AI Infrastructure": stage("diffusing", "emerging", 5), "MU": stage("diffusing", "diffusing", 3)}))
+    notes("long/tech", "2026-09-20", json.loads((ROOT / "long/tech/graph.json").read_text())["hub_evidence"])
 
     write_json("long/macro/graph.json", graph("2026-09-20", [
         row("Global Liquidity", "trend", "decelerating", "med", 12, -2, 0.061, 9),
@@ -125,6 +170,7 @@ def main():
         "GLD — Gold": [evidence("Sample note 4", 0.63, 1, "bullish", 0.9, "official-sector buying set another record")],
     }, {"Global Liquidity": stage("crowded", "diffusing", 4), "GLD — Gold": stage("diffusing", "emerging", 4)},
         contradictions=[{"rule": "R2", "hub": "DXY — US Dollar Index", "detail": "sample contradiction flag"}]))
+    notes("long/macro", "2026-09-20", json.loads((ROOT / "long/macro/graph.json").read_text())["hub_evidence"])
 
     # ------------------------------------------------------------------ LONG ledger + runs
     def close(t, d, opened, closed, basis, px, sh, pnl, pct, verdict, outcome, sv, origin, horizon="Medium"):
@@ -175,6 +221,8 @@ def main():
     write_json("st/macro/graph.json", graph("2026-10-01", [
         row("Energy Shock", "trend", "decelerating", "med", 6, -1, 0.052, 6),
         row("SPY — S&P 500", "ticker", "accelerating", "high", 2, 2, 0.060, 9)], {}, {}))
+    notes("st/tech", "2026-10-01", {})
+    notes("st/macro", "2026-10-01", {})
     write_json("st/ledger.json", {
         "meta": {"strategy_version": "ST-v1.1", "as_of": "2026-10-01 (SAMPLE)", "starting_capital": 100000},
         "open_positions": [

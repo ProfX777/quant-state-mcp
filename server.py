@@ -25,7 +25,7 @@ RO_BROKER = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotent
 
 server = MCPServer(
     name="quant-state",
-    version="0.2.0",
+    version="0.3.0",
     instructions=(
         f"DATA SOURCE: {state.CONFIG['label']}. "
         "Read-only state of a three-book research system (LONG = weekly 2-8 week theses, ST = daily "
@@ -70,6 +70,18 @@ def get_ticker_context(book: str, ticker: str) -> dict:
 @server.tool(annotations=RO, description="Hubs whose support is decaying (stale, decelerating, negative velocity, weak strength), worst first. What an idea should not lean on.")
 def fading_theses(book: str, limit: int = 15) -> dict:
     return state.fading_theses(book, limit=limit)
+
+
+@server.tool(annotations=RO, description="What is trending: hubs ranked by the graph's own deep_read_score (pagerank x (1 + velocity) x momentum), or by pagerank or velocity. Optional domain filter and kind ('trend' | 'ticker'). The mirror image of fading_theses.")
+def trending_themes(book: str, limit: int = 15, domain: str | None = None, rank_by: str = "deep_read_score", kind: str | None = None) -> dict:
+    return state.trending_themes(book, limit=limit, domain=domain, rank_by=rank_by, kind=kind)
+
+
+@server.tool(annotations=RO, description="What came in: evidence notes imported in the last N days (or published then, with date_field='published'), newest first, each with source, authors, the hubs it supports (weight, stance, quote) and a short excerpt. Filter by domain, source_type ('x-bookmark' | 'nlm-weekly' | 'web-clip'), hub (resolved to canonical) or author substring. A finder, not a summariser: read the note at `path` for the full text. Pass as_of=YYYY-MM-DD to look at an earlier week.")
+def recent_notes(book: str, days: int = 7, domain: str | None = None, source_type: str | None = None, hub: str | None = None, author: str | None = None, date_field: str = "imported", as_of: str | None = None, limit: int = 40, excerpt_chars: int = 400, hubs_per_note: int = 5) -> dict:
+    return state.recent_notes(book, days=days, domain=domain, source_type=source_type, hub=hub, author=author,
+                              date_field=date_field, as_of=as_of, limit=limit, excerpt_chars=excerpt_chars,
+                              hubs_per_note=hubs_per_note)
 
 
 # ----------------------------------------------------------------------------- ledgers / outcomes

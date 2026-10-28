@@ -8,7 +8,7 @@
  "stale_assessment_days": 30,
  "counts": {
   "nodes": 9,
-  "edges": 24,
+  "edges": 7,
   "trends": 2,
   "tickers": 2,
   "sources": 5,
@@ -94,6 +94,7 @@
    "type": "source",
    "direction": null,
    "strength": null,
+   "date": "2026-09-19",
    "age_days": 1,
    "stale": false,
    "pagerank": 0.003,
@@ -111,6 +112,7 @@
    "type": "source",
    "direction": null,
    "strength": null,
+   "date": "2026-09-18",
    "age_days": 2,
    "stale": false,
    "pagerank": 0.003,
@@ -128,6 +130,7 @@
    "type": "source",
    "direction": null,
    "strength": null,
+   "date": "2026-09-17",
    "age_days": 3,
    "stale": false,
    "pagerank": 0.003,
@@ -145,6 +148,7 @@
    "type": "source",
    "direction": null,
    "strength": null,
+   "date": "2026-09-16",
    "age_days": 4,
    "stale": false,
    "pagerank": 0.003,
@@ -162,6 +166,7 @@
    "type": "source",
    "direction": null,
    "strength": null,
+   "date": "2026-09-15",
    "age_days": 5,
    "stale": false,
    "pagerank": 0.003,
@@ -175,7 +180,120 @@
    "out_degree": 2
   }
  ],
- "edges": [],
+ "edges": [
+  {
+   "src": "Sample note 1",
+   "dst": "AI Infrastructure",
+   "weight": 0.71,
+   "kinds": [
+    "pertains_to",
+    "trend_fit"
+   ],
+   "sections": [],
+   "etype": "trend_fit",
+   "conf": 0.9,
+   "quote": "hyperscaler capex guides were raised again this quarter",
+   "source_type": "x-bookmark",
+   "asserted_date": "2026-09-18",
+   "stance": "bullish"
+  },
+  {
+   "src": "Sample note 2",
+   "dst": "AI Infrastructure",
+   "weight": 0.62,
+   "kinds": [
+    "pertains_to",
+    "trend_fit"
+   ],
+   "sections": [],
+   "etype": "trend_fit",
+   "conf": 0.8,
+   "quote": "power, not chips, is now the binding constraint",
+   "source_type": "x-bookmark",
+   "asserted_date": "2026-09-16",
+   "stance": "bullish"
+  },
+  {
+   "src": "Sample note 3",
+   "dst": "AI Infrastructure",
+   "weight": 0.55,
+   "kinds": [
+    "pertains_to",
+    "trend_fit"
+   ],
+   "sections": [],
+   "etype": "trend_fit",
+   "conf": 0.7,
+   "quote": "order books look full into next year",
+   "source_type": "x-bookmark",
+   "asserted_date": "2026-09-14",
+   "stance": "neutral"
+  },
+  {
+   "src": "Sample note 4",
+   "dst": "AI Infrastructure",
+   "weight": 0.41,
+   "kinds": [
+    "pertains_to",
+    "trend_fit"
+   ],
+   "sections": [],
+   "etype": "trend_fit",
+   "conf": 0.6,
+   "quote": "rental rates for older GPUs are starting to slip",
+   "source_type": "x-bookmark",
+   "asserted_date": "2026-09-11",
+   "stance": "bearish"
+  },
+  {
+   "src": "Sample note 5",
+   "dst": "AI Infrastructure",
+   "weight": 0.3,
+   "kinds": [
+    "pertains_to",
+    "trend_fit"
+   ],
+   "sections": [],
+   "etype": "trend_fit",
+   "conf": 0.5,
+   "quote": "inference demand keeps surprising to the upside",
+   "source_type": "x-bookmark",
+   "asserted_date": "2026-09-08",
+   "stance": "bullish"
+  },
+  {
+   "src": "Sample note 1",
+   "dst": "MU",
+   "weight": 0.66,
+   "kinds": [
+    "pertains_to",
+    "trend_fit"
+   ],
+   "sections": [],
+   "etype": "trend_fit",
+   "conf": 0.85,
+   "quote": "contract memory prices rose again in the latest check",
+   "source_type": "x-bookmark",
+   "asserted_date": "2026-09-18",
+   "stance": "bullish"
+  },
+  {
+   "src": "Sample note 3",
+   "dst": "MU",
+   "weight": 0.4,
+   "kinds": [
+    "pertains_to",
+    "trend_fit"
+   ],
+   "sections": [],
+   "etype": "trend_fit",
+   "conf": 0.6,
+   "quote": "inventory at module makers is back to normal",
+   "source_type": "x-bookmark",
+   "asserted_date": "2026-09-14",
+   "stance": "neutral"
+  }
+ ],
  "hub_evidence": {
   "AI Infrastructure": [
    {

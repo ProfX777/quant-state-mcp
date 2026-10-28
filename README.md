@@ -1,6 +1,6 @@
 # quant-state
 
-A read-only [MCP](https://modelcontextprotocol.io) server that lets an AI assistant ask structured questions about a personal AI research and paper-trading system: its knowledge graph, three simulated portfolios, a forecast ledger, a source registry and paper-broker positions. **17 typed tools, 4 resources, no writes, no orders.**
+A read-only [MCP](https://modelcontextprotocol.io) server that lets an AI assistant ask structured questions about a personal AI research and paper-trading system: its knowledge graph, three simulated portfolios, a forecast ledger, a source registry and paper-broker positions. **19 typed tools, 4 resources, no writes, no orders.**
 
 This repository is the public, read-only interface to a larger private system that runs daily: AI agents read a curated set of market research, maintain an evidence graph of investment themes, turn it into trade ideas, track them in paper portfolios, and grade every outcome against the sources behind it. **Plain-English overview of the full system: [AI-Assisted Research Desk](https://claude.ai/artifact/PFXkK5nqYGNHHPKkhNyar1).**
 
@@ -43,6 +43,8 @@ All tools take `book` = `LONG` (weekly, 2-8 week theses), `ST` (daily, 2 days to
 | `get_theme(book, name)` | Direction, strength, staleness, pagerank, velocity, narrative stage, track record, strongest evidence |
 | `get_ticker_context(book, ticker)` | `get_theme` plus the book's position in that ticker |
 | `fading_theses(book)` | Themes losing support (stale, decelerating, negative velocity), worst first |
+| `trending_themes(book, rank_by?, domain?, kind?)` | Themes gaining support, strongest first, by the graph's own deep-read score (or pagerank, velocity) |
+| `recent_notes(book, days?, hub?, author?, source_type?)` | Evidence notes that came in this week: source, hubs supported (weight, stance, quote), excerpt, path to the full note |
 | `ledger_summary(book)` | Cash, equity, exposure, P&L, open/closed counts |
 | `get_positions(book)` | Open positions with stops and review dates |
 | `get_pick_outcomes(book, ticker?, since?)` | Closed positions and their verdicts |
@@ -75,13 +77,17 @@ Resources: `quant://books`, `quant://ledger/{book}`, `quant://run/{book}/{date}`
 | What a run closed, and the cohort hit rate | 162 KB | 0.7 KB | 217× |
 | Canonical page for a mention | 990 KB | 0.25 KB | 4,006× |
 | Ledger vs broker tie-out | 808 KB | 0.13 KB | 6,264× |
+| What is trending (top 15 hubs, both domains) | 3,411 KB | 6.2 KB | 552× |
+| What came in this week (159 notes, 40 shown with excerpts) | 724 KB | 61 KB | 12× |
+
+The last row is the honest one: `recent_notes` is a finder, so it keeps an excerpt and the path per note and the ratio is modest. Its job is to make the right two or three notes obvious, not to replace reading them.
 
 This is a byte proxy for a naive full-file read, not a per-run token measurement. Stages that must read note prose (for example, to quote evidence word for word) gain nothing from typed reads; the gain is confined to structured questions like these. On the small sample dataset the same script shows smaller ratios.
 
 ## Tests
 
 - `test_state.py`: 48 checks on the sample data, including the config switch, alias resolution, cohort hit rates, and the broker path end to end through `sample_data/fake_broker.py`.
-- `smoke_client.py`: starts the server with the official MCP client and calls all 17 tools and two resources.
+- `smoke_client.py`: starts the server with the official MCP client and calls all 19 tools and two resources.
 - Both take under a minute and need no network or credentials.
 
 ## Layout

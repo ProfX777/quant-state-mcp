@@ -91,6 +91,57 @@ gm = state.graph_meta("LONG")
 check("graph_meta reports both domains and the contradiction flag", set(gm["domains"]) == {"tech", "macro"}
       and gm["domains"]["macro"]["contradiction_flags"] == 1)
 
+case("trending themes: the graph's own ranking, strongest first")
+t = state.trending_themes("LONG")
+check("8 hubs across both domains, AI Infrastructure first by deep_read_score", t["count"] == 8 and t["hubs"][0]["hub"] == "AI Infrastructure" and t["hubs"][0]["rank"] == 1,
+      [(h["hub"], h["deep_read_score"]) for h in t["hubs"][:3]])
+check("ranks carry the ordering after the limit", state.trending_themes("LONG", limit=2)["hubs"][1]["rank"] == 2)
+check("rank_by=pagerank reorders (AI Infrastructure 0.081 still first)", state.trending_themes("LONG", rank_by="pagerank")["hubs"][0]["pagerank"] == 0.081)
+check("rank_by=velocity puts the fastest hub first", state.trending_themes("LONG", rank_by="velocity")["hubs"][0]["velocity"] == 4)
+check("kind=ticker: GLD (0.048 x 4 x 1.5) beats MU", state.trending_themes("LONG", kind="ticker")["hubs"][0]["hub"] == "GLD — Gold")
+check("domain=macro restricts to that graph", state.trending_themes("LONG", domain="macro")["count"] == 4)
+check("narrative stage and evidence count ride along", t["hubs"][0]["narrative_stage"] == "diffusing" and t["hubs"][0]["evidence_count"] == 5)
+try:
+    state.trending_themes("LONG", rank_by="betweenness")
+    check("unknown rank_by rejected", False)
+except ValueError:
+    check("unknown rank_by rejected", True)
+
+case("recent notes: what came in, newest first, excerpt from the right place")
+r = state.recent_notes("LONG", days=7, as_of="2026-09-20")
+check("10 notes imported in the week (5 per domain)", r["count"] == 10, r["count"])
+check("newest first", r["notes"][0]["imported"] == "2026-09-19" and r["notes"][-1]["imported"] == "2026-09-15")
+n1 = next(n for n in r["notes"] if n["note"] == "Sample note 1" and n["domain"] == "tech")
+check("hubs listed strongest first with weight, stance, quote", n1["hubs"][0]["hub"] == "AI Infrastructure" and n1["hubs"][0]["weight"] == 0.71 and n1["hubs"][1]["hub"] == "MU" and n1["hubs"][0]["stance"] == "bullish")
+check("excerpt prefers the note's own description", n1["excerpt"].startswith("Sample note 1 description"))
+n3 = next(n for n in r["notes"] if n["note"] == "Sample note 3" and n["domain"] == "tech")
+check("no description: excerpt is the body's first paragraph, not the AI explanation", n3["excerpt"].startswith("Sample note 3 body") and "explanation" not in n3["excerpt"])
+n2 = next(n for n in r["notes"] if n["note"] == "Sample note 2" and n["domain"] == "tech")
+check("NotebookLM layout: title, notice and query skipped; theme heading kept as text",
+      n2["excerpt"].startswith("1. Invented theme Sample note 2 body") and "Source-scoped" not in n2["excerpt"]
+      and "What changed" not in n2["excerpt"] and n2["source_type"] == "nlm-weekly", n2["excerpt"])
+check("hubs_per_note caps the list, hubs_total keeps the count",
+      len(state.recent_notes("LONG", as_of="2026-09-20", hub="AI infra", hubs_per_note=1)["notes"][0]["hubs"]) == 1
+      and n1["hubs_total"] == 2)
+check("authors cleaned of wikilink and @", n1["authors"] == ["ExampleAnalyst"])
+check("path points at a real file", n1["path"] and os.path.exists(n1["path"]))
+check("days=3 narrows to 6", state.recent_notes("LONG", days=3, as_of="2026-09-20")["count"] == 6)
+check("date_field=published drops note 5 (published 40 days before import)", state.recent_notes("LONG", days=7, as_of="2026-09-20", date_field="published")["count"] == 8)
+check("hub filter resolves an alias: 'AI infra' -> 5 tech notes", state.recent_notes("LONG", as_of="2026-09-20", hub="AI infra")["count"] == 5)
+check("hub filter: 'Micron' -> notes 1 and 3", sorted(n["note"] for n in state.recent_notes("LONG", as_of="2026-09-20", hub="Micron")["notes"]) == ["Sample note 1", "Sample note 3"])
+check("unknown hub: count 0 with the resolve result, not a guess", state.recent_notes("LONG", as_of="2026-09-20", hub="Nonexistent")["count"] == 0)
+check("source_type filter", state.recent_notes("LONG", as_of="2026-09-20", source_type="nlm-weekly")["count"] == 2)
+check("author substring filter (case-insensitive)", state.recent_notes("LONG", as_of="2026-09-20", author="examplean")["count"] == 8)
+check("author filter also matches the notebook name", state.recent_notes("LONG", as_of="2026-09-20", author="macro library")["count"] == 2)
+check("limit caps the list but count stays total", len(state.recent_notes("LONG", as_of="2026-09-20", limit=3)["notes"]) == 3 and state.recent_notes("LONG", as_of="2026-09-20", limit=3)["count"] == 10)
+stale = state.recent_notes("LONG", days=7, as_of="2026-10-26")
+check("stale graph: nothing in the window and a warning naming the snapshot age", stale["count"] == 0 and len(stale["warnings"]) == 2 and "36 days old" in stale["warnings"][0], stale["warnings"])
+try:
+    state.recent_notes("LONG", date_field="created")
+    check("unknown date_field rejected", False)
+except ValueError:
+    check("unknown date_field rejected", True)
+
 case("ledgers and outcomes")
 s = state.ledger_summary("LONG")
 check("LONG summary: 3 open, 5 closed, equity and version", s["open_positions"] == 3 and s["closed_positions"] == 5

@@ -27,6 +27,7 @@ import os
 import re
 import subprocess
 import sys
+from datetime import date as _date, timedelta as _timedelta
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -61,9 +62,12 @@ def load_config(path=None) -> dict:
     base = p.parent
     books = {}
     for name, b in raw["books"].items():
-        domains = [{"name": d["name"], "graph": _resolve(base, d.get("graph")),
-                    "hubs": {kind: _resolve(base, folder) for kind, folder in (d.get("hubs") or {}).items()}}
-                   for d in b.get("domains", [])]
+        domains = []
+        for d in b.get("domains", []):
+            hubs = {kind: _resolve(base, folder) for kind, folder in (d.get("hubs") or {}).items()}
+            # the vault holding the evidence notes: given explicitly, else the folder the hub folders sit in
+            vault = _resolve(base, d.get("vault")) or next((p.parent for p in hubs.values() if p), None)
+            domains.append({"name": d["name"], "graph": _resolve(base, d.get("graph")), "hubs": hubs, "vault": vault})
         broker = b.get("broker")
         if broker:
             cmd = []
@@ -286,6 +290,181 @@ def fading_theses(book: str, limit: int = 15) -> dict:
                             "narrative_stage": stages.get(r["name"], {}).get("narrative_stage"), "reasons": reasons})
     out.sort(key=lambda x: (-len(x["reasons"]), -(x["age_days"] or 0)))
     return {"book": book.upper(), "count": len(out), "hubs": out[:limit]}
+
+
+RANK_FIELDS = ("deep_read_score", "pagerank", "velocity")
+
+
+def trending_themes(book: str, limit: int = 15, domain: str | None = None, rank_by: str = "deep_read_score",
+                    kind: str | None = None) -> dict:
+    """Hubs with the most support right now, strongest first: the mirror image of fading_theses. Ranks on
+    the graph's own precomputed scores (deep_read_score = pagerank x (1 + velocity) x momentum by default),
+    so the answer is exactly what the pipeline's deep-read ordering sees, at a fraction of the snapshot."""
+    if rank_by not in RANK_FIELDS:
+        raise ValueError(f"rank_by must be one of {RANK_FIELDS}")
+    if kind not in (None, "trend", "ticker"):
+        raise ValueError("kind must be 'trend', 'ticker' or omitted")
+    out, as_of = [], {}
+    for d in _book(book)["domains"]:
+        if domain and d["name"].lower() != domain.lower():
+            continue
+        try:
+            g = _graph(d)
+        except FileNotFoundError:
+            continue
+        as_of[d["name"]] = g.get("today")
+        stages = g.get("narrative_stages") or {}
+        evidence = g.get("hub_evidence") or {}
+        for r in g.get("rows", []):
+            if r.get("type") not in ("trend", "ticker") or (kind and r.get("type") != kind):
+                continue
+            st = stages.get(r["name"], {})
+            out.append({"domain": d["name"], "hub": r["name"], "type": r["type"],
+                        "deep_read_score": r.get("deep_read_score"), "pagerank": r.get("pagerank"),
+                        "velocity": r.get("velocity"), "momentum": r.get("momentum"),
+                        "direction": r.get("direction"), "strength": r.get("strength"),
+                        "age_days": r.get("age_days"), "stale": r.get("stale"), "in_degree": r.get("in_degree"),
+                        "evidence_count": len(evidence.get(r["name"], [])),
+                        "narrative_stage": st.get("narrative_stage"), "stage_transition": st.get("stage_transition"),
+                        "source_diversity": st.get("source_diversity_count")})
+    out.sort(key=lambda x: -(x[rank_by] or 0))
+    for i, x in enumerate(out, 1):
+        x["rank"] = i
+    return {"book": book.upper(), "rank_by": rank_by, "graph_as_of": as_of, "count": len(out), "hubs": out[:limit]}
+
+
+# ----------------------------------------------------------------------------- evidence notes
+def _note_index(domain: dict) -> dict:
+    """stem -> path for every note in a domain's vault that is not a hub page."""
+    vault = domain.get("vault")
+    if not vault or not vault.exists():
+        return {}
+    hub_dirs = {p.resolve() for p in domain["hubs"].values() if p}
+    idx = {}
+    for p in vault.rglob("*.md"):
+        if any(h in p.resolve().parents for h in hub_dirs):
+            continue
+        idx.setdefault(p.stem, p)
+    return idx
+
+
+SKIP_SECTIONS = {"query"}      # a NotebookLM note's "## Query" section is the question asked, not evidence
+
+
+def _excerpt(raw: str, limit: int) -> str:
+    """The first run of real text in a note body. Sections split on '## ', so an X post's own text wins
+    over the AI explanation after it, and a NotebookLM note's answer wins over its title, its
+    'source-scoped' notice (a block quote) and the query it was asked. Sub-headings inside a section are
+    kept as text because in a NotebookLM answer they carry the theme names."""
+    body = raw
+    if raw.startswith("---\n"):
+        end = raw.find("\n---\n", 4)
+        body = raw[end + 5:] if end > 0 else ""
+    for i, chunk in enumerate(("\n" + body).split("\n## ")):
+        lines = chunk.split("\n")
+        if i:                                                # after a split the first line is the heading
+            if lines[0].strip().strip("*").lower() in SKIP_SECTIONS:
+                continue
+            lines = lines[1:]
+        keep = []
+        for ln in lines:
+            ln = ln.strip()
+            if not ln or ln.startswith(">") or ln.startswith("```") or re.match(r"^#\s", ln):
+                continue                                     # block quotes, fences and the H1 title
+            keep.append(re.sub(r"^#+\s*", "", ln).replace("**", "").replace("`", ""))
+        text = re.sub(r"\s+", " ", " ".join(keep)).strip()
+        if text:
+            return text[:limit] + ("…" if len(text) > limit else "")
+    return ""
+
+
+def _iso_date(value):
+    try:
+        return _date.fromisoformat(str(value)[:10]) if value else None
+    except ValueError:
+        return None
+
+
+def _clean_author(a: str) -> str:
+    return str(a).strip().strip("[]\"'").lstrip("@")
+
+
+def recent_notes(book: str, days: int = 7, domain: str | None = None, source_type: str | None = None,
+                 hub: str | None = None, author: str | None = None, date_field: str = "imported",
+                 as_of: str | None = None, limit: int = 40, excerpt_chars: int = 400, hubs_per_note: int = 5) -> dict:
+    """Evidence notes that entered the system in the last `days` (or were published then, with
+    date_field='published'), newest first, each with its source, author, the hubs it supports (weight,
+    stance, quote) and a short excerpt. A finder, not a summariser: the full note is one read away."""
+    if date_field not in ("imported", "published"):
+        raise ValueError("date_field must be 'imported' or 'published'")
+    today = _iso_date(as_of) or _date.today()
+    since = today - _timedelta(days=days)
+    canonical = None
+    if hub:
+        res = resolve_entity(book, hub)
+        if not res.get("resolved"):
+            return {"book": book.upper(), "hub": hub, "count": 0, "notes": [], "resolve": res}
+        canonical = res["canonical"]
+    out, as_of_by_domain, warnings = [], {}, []
+    for d in _book(book)["domains"]:
+        if domain and d["name"].lower() != domain.lower():
+            continue
+        try:
+            g = _graph(d)
+        except FileNotFoundError:
+            continue
+        as_of_by_domain[d["name"]] = g.get("today")
+        g_today = _iso_date(g.get("today"))
+        if g_today and (today - g_today).days > days:
+            warnings.append(f"{d['name']}: graph snapshot is {(today - g_today).days} days old; "
+                            f"notes added since {g_today} are not in it")
+        edges_by_src = {}
+        for e in g.get("edges", []):
+            edges_by_src.setdefault(e.get("src"), []).append(e)
+        idx = _note_index(d)
+        for r in g.get("rows", []):
+            if r.get("type") != "source":
+                continue
+            p = idx.get(r["name"])
+            fm = _fm(p) if p else {}
+            published = _iso_date(fm.get("date_published") or fm.get("published") or r.get("date"))
+            imported = _iso_date(fm.get("date_imported") or fm.get("created")) or published
+            when = imported if date_field == "imported" else published
+            if when is None or not (since <= when <= today):
+                continue
+            edges = sorted(edges_by_src.get(r["name"], []), key=lambda e: -(e.get("weight") or 0))
+            if canonical and not any(e.get("dst") == canonical for e in edges):
+                continue
+            stype = fm.get("source_type") or next((e.get("source_type") for e in edges if e.get("source_type")), None)
+            if source_type and (stype or "").lower() != source_type.lower():
+                continue
+            authors = [_clean_author(a) for a in (fm.get("author") or [])] if isinstance(fm.get("author"), list) else \
+                      ([_clean_author(fm["author"])] if fm.get("author") else [])
+            if author and not any(author.lower() in a.lower() for a in authors + [str(fm.get("notebook") or "")]):
+                continue
+            out.append({
+                "domain": d["name"], "note": r["name"], "title": fm.get("title") or r["name"],
+                "source": fm.get("source"), "source_type": stype, "authors": authors,
+                "notebook": fm.get("notebook"), "url": fm.get("url"),
+                "published": published.isoformat() if published else None,
+                "imported": imported.isoformat() if imported else None,
+                "age_days": (today - when).days,
+                "pagerank": r.get("pagerank"), "in_degree": r.get("in_degree"),
+                "hubs_total": len(edges),
+                "hubs": [{"hub": e.get("dst"), "weight": e.get("weight"), "stance": e.get("stance"),
+                          "conf": e.get("conf"), "quote": (e.get("quote") or "")[:160]} for e in edges[:hubs_per_note]],
+                "excerpt": (str(fm.get("description") or "")[:excerpt_chars]
+                            or (_excerpt(p.read_text(errors="ignore"), excerpt_chars) if p else "")),
+                "path": str(p) if p else None,
+                "_w": sum(e.get("weight") or 0 for e in edges), "_when": when,
+            })
+    out.sort(key=lambda x: (x["_when"], x["_w"]), reverse=True)
+    for x in out:
+        x.pop("_w"), x.pop("_when")
+    return {"book": book.upper(), "window": {"days": days, "since": since.isoformat(), "as_of": today.isoformat(),
+                                             "date_field": date_field},
+            "filters": {"domain": domain, "source_type": source_type, "hub": canonical, "author": author},
+            "graph_as_of": as_of_by_domain, "warnings": warnings, "count": len(out), "notes": out[:limit]}
 
 
 # ----------------------------------------------------------------------------- ledgers

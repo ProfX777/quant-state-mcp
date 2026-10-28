@@ -17,7 +17,7 @@ from mcp.client.stdio import StdioServerParameters, stdio_client
 HERE = Path(__file__).resolve().parent
 
 EXPECTED_TOOLS = {"list_books", "graph_meta", "resolve_entity", "get_theme", "get_ticker_context", "fading_theses",
-                  "ledger_summary", "get_positions", "get_pick_outcomes", "hit_rate", "score_run", "list_runs",
+                  "trending_themes", "recent_notes", "ledger_summary", "get_positions", "get_pick_outcomes", "hit_rate", "score_run", "list_runs",
                   "forecast_rows", "resolve_source", "ingest_status", "broker_snapshot", "reconcile_diff"}
 CALLS = [
     ("list_books", {}, lambda r: r["data_source"]["label"] == "SAMPLE" and set(r["books"]) == {"LONG", "ST", "ROTATION"}),
@@ -26,6 +26,8 @@ CALLS = [
     ("get_theme", {"book": "LONG", "name": "AI Infrastructure", "evidence_limit": 3}, lambda r: r["found"] and len(r["evidence"]) == 3),
     ("get_ticker_context", {"book": "LONG", "ticker": "MU"}, lambda r: r["ledger"]["open"][0]["shares"] == 10),
     ("fading_theses", {"book": "ST", "limit": 3}, lambda r: r["count"] == 2),
+    ("trending_themes", {"book": "LONG", "limit": 3}, lambda r: r["hubs"][0]["hub"] == "AI Infrastructure" and r["hubs"][0]["rank"] == 1),
+    ("recent_notes", {"book": "LONG", "days": 7, "as_of": "2026-09-20", "hub": "AI infra"}, lambda r: r["count"] == 5 and r["notes"][0]["excerpt"]),
     ("ledger_summary", {"book": "LONG"}, lambda r: r["open_positions"] == 3),
     ("get_positions", {"book": "ROTATION"}, lambda r: len(r["positions"]) == 3),
     ("get_pick_outcomes", {"book": "LONG", "since": "2026-09-20"}, lambda r: r["count"] == 4),

@@ -8,7 +8,7 @@
  "stale_assessment_days": 30,
  "counts": {
   "nodes": 9,
-  "edges": 24,
+  "edges": 2,
   "trends": 2,
   "tickers": 2,
   "sources": 5,
@@ -94,6 +94,7 @@
    "type": "source",
    "direction": null,
    "strength": null,
+   "date": "2026-09-19",
    "age_days": 1,
    "stale": false,
    "pagerank": 0.003,
@@ -111,6 +112,7 @@
    "type": "source",
    "direction": null,
    "strength": null,
+   "date": "2026-09-18",
    "age_days": 2,
    "stale": false,
    "pagerank": 0.003,
@@ -128,6 +130,7 @@
    "type": "source",
    "direction": null,
    "strength": null,
+   "date": "2026-09-17",
    "age_days": 3,
    "stale": false,
    "pagerank": 0.003,
@@ -145,6 +148,7 @@
    "type": "source",
    "direction": null,
    "strength": null,
+   "date": "2026-09-16",
    "age_days": 4,
    "stale": false,
    "pagerank": 0.003,
@@ -162,6 +166,7 @@
    "type": "source",
    "direction": null,
    "strength": null,
+   "date": "2026-09-15",
    "age_days": 5,
    "stale": false,
    "pagerank": 0.003,
@@ -175,7 +180,40 @@
    "out_degree": 2
   }
  ],
- "edges": [],
+ "edges": [
+  {
+   "src": "Sample note 2",
+   "dst": "Global Liquidity",
+   "weight": 0.58,
+   "kinds": [
+    "pertains_to",
+    "trend_fit"
+   ],
+   "sections": [],
+   "etype": "trend_fit",
+   "conf": 0.8,
+   "quote": "balance-sheet runoff is draining reserves faster than expected",
+   "source_type": "x-bookmark",
+   "asserted_date": "2026-09-17",
+   "stance": "bearish"
+  },
+  {
+   "src": "Sample note 4",
+   "dst": "GLD \u2014 Gold",
+   "weight": 0.63,
+   "kinds": [
+    "pertains_to",
+    "trend_fit"
+   ],
+   "sections": [],
+   "etype": "trend_fit",
+   "conf": 0.9,
+   "quote": "official-sector buying set another record",
+   "source_type": "x-bookmark",
+   "asserted_date": "2026-09-19",
+   "stance": "bullish"
+  }
+ ],
  "hub_evidence": {
   "Global Liquidity": [
    {
